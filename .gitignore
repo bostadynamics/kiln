@@ -1,0 +1,9 @@
+# Python
+.venv
+pyvenv.cfg
+build
+*.egg-info
+__pycache__
+.pytest_cache
+.ipynb_checkpoints
+.requirements.zip
