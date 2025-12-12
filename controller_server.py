@@ -2,6 +2,7 @@ import sys
 from typing import List, Optional, Tuple, Union
 
 from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -315,6 +316,13 @@ def set_run_status(req: RunStopRequest):
     return {"status": "ok", "run_status": req.value}
 
 
+@app.get("/patterns/{id}/edit", response_class=HTMLResponse)
+async def pattern_editor(id: int, request: Request):
+    return templates.TemplateResponse(
+        "pattern_editor.html", {"request": request, "pattern_id": id}
+    )
+
+
 @app.get("/status/keys")
 def get_key_status():
     return {
@@ -323,6 +331,8 @@ def get_key_status():
         "up": kiln.get_key_up_status(),
         "down": kiln.get_key_down_status(),
     }
+
+
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 

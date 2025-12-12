@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Pattern {{ pattern_id }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111;
+            color: #eee;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #1e1e1e;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        #chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .config-header {
+            font-weight: 600;
+            color: #9ca3af;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-row {
+            display: contents;
+        }
+
+        .step-label {
+            display: flex;
+            align-items: center;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        input {
+            background-color: #333;
+            border: 1px solid #4b5563;
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            border-top: 1px solid #374151;
+            padding-top: 1.5rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-cancel {
+            background-color: #374151;
+            color: #fff;
+        }
+
+        .btn-save {
+            background-color: #3b82f6;
+            color: #fff;
+        }
+
+        .btn-save:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Success/Error Toasts */
+        #status-msg {
+            margin-top: 1rem;
+            text-align: right;
+            min-height: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Edit Pattern {{ pattern_id }}</h1>
+
+        <div id="chart-container">
+            <canvas id="patternChart"></canvas>
+        </div>
+
+        <div class="config-grid">
+            <div class="config-header">Step</div>
+            <div class="config-header">Temperature (°C)</div>
+            <div class="config-header">Time (min)</div>
+
+            <!-- 8 Steps -->
+            {% for i in range(8) %}
+            <div class="step-row">
+                <div class="step-label">Step {{ i }}</div>
+                <input type="number" id="temp-{{ i }}" class="step-input" step="0.1" value="0">
+                <input type="number" id="time-{{ i }}" class="step-input" step="1" value="0">
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="actions">
+            <div id="status-msg"></div>
+            <button class="btn-cancel" onclick="window.location.href='/patterns'">Cancel</button>
+            <button class="btn-save" id="save-btn" onclick="savePattern()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        const PATTERN_ID = {{ pattern_id }};
+        const API_BASE = '';
+        let chartInstance = null;
+
+        // Load initial data
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_BASE}/pattern/${PATTERN_ID}`);
+                if (!response.ok) throw new Error('Failed to load pattern');
+                const data = await response.json();
+
+                // Populate inputs
+                data.steps.forEach(step => {
+                    const tempInput = document.getElementById(`temp-${step.step}`);
+                    const timeInput = document.getElementById(`time-${step.step}`);
+                    if (tempInput && timeInput) {
+                        tempInput.value = step.temp;
+                        timeInput.value = step.time;
+                    }
+                });
+
+                updateChart(); // Initial render
+            } catch (error) {
+                console.error(error);
+                alert('Error loading pattern data');
+            }
+        }
+
+        // Gather current values from inputs
+        function getStepsFromInputs() {
+            const steps = [];
+            for (let i = 0; i < 8; i++) {
+                const temp = parseFloat(document.getElementById(`temp-${i}`).value) || 0;
+                const time = parseInt(document.getElementById(`time-${i}`).value) || 0;
+                steps.push({ step: i, temp: temp, time: time });
+            }
+            return steps;
+        }
+
+        // Live Preview Logic
+        function updateChart() {
+            const steps = getStepsFromInputs();
+            const labels = [];
+            const dataPoints = [];
+
+            let currentTime = 0;
+            let currentTemp = 25; // Assumption mainly for viz start
+
+            labels.push(currentTime);
+            dataPoints.push(currentTemp);
+
+            steps.forEach(step => {
+                if (step.time > 0 || (step.step === 7 && step.time === 0)) {
+                    currentTime += step.time;
+                    labels.push(currentTime);
+                    dataPoints.push(step.temp);
+                }
+            });
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('patternChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Temperature Preview',
+                        data: dataPoints,
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#1e1e1e',
+                        pointBorderColor: '#60a5fa',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { type: 'linear', grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        y: {
+                            grid: { color: '#374151' },
+                            ticks: { color: '#9ca3af' },
+                            beginAtZero: true
+                        }
+                    },
+                    animation: {
+                        duration: 0 // Instant update for responsiveness
+                    }
+                }
+            });
+        }
+
+        // Save Function
+        async function savePattern() {
+            const btn = document.getElementById('save-btn');
+            const status = document.getElementById('status-msg');
+
+            btn.disabled = true;
+            btn.innerText = 'Saving...';
+            status.innerText = '';
+            status.style.color = '#ccc';
+
+            try {
+                const steps = getStepsFromInputs();
+
+                // Sequentially save each step
+                for (const step of steps) {
+                    const res = await fetch(`${API_BASE}/pattern/${PATTERN_ID}/step/${step.step}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ temp: step.temp, time: step.time })
+                    });
+
+                    if (!res.ok) throw new Error(`Failed at step ${step.step}`);
+                }
+
+                status.innerText = 'Pattern Saved Successfully!';
+                status.style.color = '#22c55e';
+
+                setTimeout(() => {
+                    status.innerText = '';
+                }, 3000);
+
+            } catch (error) {
+                console.error(error);
+                status.innerText = 'Error Saving: ' + error.message;
+                status.style.color = '#ef4444';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Save Changes';
+            }
+        }
+
+        // Event Listeners
+        document.querySelectorAll('.step-input').forEach(input => {
+            input.addEventListener('input', updateChart);
+        });
+
+        // Init
+        loadData();
+    </script>
+</body>
+
+</html>
