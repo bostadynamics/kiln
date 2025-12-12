@@ -382,12 +382,12 @@ def parse_commandline(argv: List[str]) -> Tuple[str, str, int]:
 
 
 def main() -> None:
-    from delta import Delta
+    from delta2 import Delta2
 
     portname, mode, baudrate = parse_commandline(sys.argv)
     show_test_settings(mode, baudrate, portname)
 
-    inst = Delta(portname, SLAVE_ADDRESS)
+    inst = Delta2(portname, SLAVE_ADDRESS)
     if inst.serial is None:
         raise ValueError("Instrument.serial is None")
 
