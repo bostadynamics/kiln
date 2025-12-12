@@ -379,6 +379,11 @@ async def get_dashboard_partial(request: Request):
 
         pv_color = calculate_color(pv, setpoint)
 
+        # Fetch status
+        current_pattern = kiln.get_executing_pattern_number()
+        current_step = kiln.get_executing_step_number()
+        time_left = f"{kiln.get_step_time_left_min()}m {kiln.get_step_time_left_sec()}s"
+
         return templates.TemplateResponse(
             "partials/dashboard.html",
             {
@@ -388,6 +393,9 @@ async def get_dashboard_partial(request: Request):
                 "output1": output1,
                 "output2": output2,
                 "pv_color": pv_color,
+                "pattern": current_pattern,
+                "step": current_step,
+                "time_left": time_left,
             },
         )
     except Exception as e:
