@@ -149,6 +149,8 @@
 
         <div class="nav-links">
             <a href="/patterns">View Patterns</a>
+            <span style="color: #555; margin: 0 0.5rem;">|</span>
+            <a id="edit-pattern-btn" href="#">Edit Pattern</a>
         </div>
     </div>
 
@@ -186,6 +188,10 @@
                 if (!isNaN(pid) && pid !== currentPatternId) {
                     currentPatternId = pid;
                     fetchAndDrawPattern(pid);
+
+                    // Update Edit Link
+                    const editBtn = document.getElementById('edit-pattern-btn');
+                    if (editBtn) editBtn.href = `/patterns/${pid}/edit`;
                 }
 
                 // Update Red Line
