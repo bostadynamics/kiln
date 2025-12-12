@@ -26,7 +26,7 @@ class PatternChart {
             datasets.push({
                 label: 'Current Temp',
                 data: [],
-                borderColor: '#ef4444', 
+                borderColor: '#ef4444',
                 borderWidth: 2,
                 pointRadius: 0,
                 borderDash: [5, 5],
@@ -46,7 +46,7 @@ class PatternChart {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        labels: { color: '#9ca3af' }
+                        display: false
                     },
                     tooltip: {
                         mode: 'index',
@@ -87,7 +87,7 @@ class PatternChart {
         let currentTemp = 25; // Default start
 
         // Initial point
-        points.push({x: currentTime, y: currentTemp});
+        points.push({ x: currentTime, y: currentTemp });
 
         steps.forEach(step => {
             // Logic reused from patterns.html
@@ -97,10 +97,10 @@ class PatternChart {
                 currentTime += step.time;
                 currentTemp = step.temp; // Step temp is target temp at end of time?
                 // Delta manual implies it ramps to 'temp' over 'time'.
-                points.push({x: currentTime, y: currentTemp});
+                points.push({ x: currentTime, y: currentTemp });
             }
         });
-        
+
         this.chart.data.datasets[0].data = points;
         this.chart.update();
         return currentTime; // Return max time
@@ -108,12 +108,12 @@ class PatternChart {
 
     updateCurrentTempLine(pv, maxTime) {
         if (!this.chart || this.chart.data.datasets.length < 2) return;
-        
+
         // Horizontal line
         const maxX = Math.max(maxTime, 10); // Ensure at least some width
         this.chart.data.datasets[1].data = [
-            {x: 0, y: pv},
-            {x: maxX, y: pv}
+            { x: 0, y: pv },
+            { x: maxX, y: pv }
         ];
         this.chart.update('none');
     }
