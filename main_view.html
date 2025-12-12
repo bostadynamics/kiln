@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta DTB Main View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111;
+            color: #eee;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #1e1e1e;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .temp-display {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .temp-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .label {
+            color: #9ca3af;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            transition: color 0.5s ease;
+        }
+
+        #pv-value {
+            color: #ef4444;
+            /* Initial Red */
+        }
+
+        #sv-value {
+            color: #22c55e;
+            /* Green */
+        }
+
+        .bars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            color: #e5e7eb;
+            font-weight: 500;
+        }
+
+        .progress-track {
+            height: 24px;
+            background-color: #374151;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            /* Blue */
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.out2 {
+            background-color: #a855f7;
+            /* Purple */
+        }
+
+        .unit {
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="temp-display">
+            <div class="temp-item">
+                <span class="label">Current Temp.</span>
+                <div>
+                    <span id="pv-value" class="value">--</span>
+                    <span class="unit">°C</span>
+                </div>
+            </div>
+            <div class="temp-item">
+                <span class="label">Target Temp.</span>
+                <div>
+                    <span id="sv-value" class="value">--</span>
+                    <span class="unit">°C</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bars-container">
+            <div class="bar-item">
+                <div class="bar-header">
+                    <span>Output 1</span>
+                    <span id="out1-text">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="out1-bar" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="bar-item">
+                <div class="bar-header">
+                    <span>Output 2</span>
+                    <span id="out2-text">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="out2-bar" class="progress-fill out2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-msg" class="error-msg"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://192.168.50.47:8000';
+
+        async function updateData() {
+            try {
+                // Fetch PV
+                const pvRes = await fetch(`${API_BASE}/pv`);
+                const pvData = await pvRes.json();
+                const pv = pvData.pv;
+
+                // Fetch Setpoint
+                const svRes = await fetch(`${API_BASE}/setpoint`);
+                const svData = await svRes.json();
+                const sv = svData.setpoint;
+
+                // Fetch Output 1
+                const out1Res = await fetch(`${API_BASE}/output/1`);
+                const out1Data = await out1Res.json();
+                const out1 = out1Data.output_1;
+
+                // Fetch Output 2
+                const out2Res = await fetch(`${API_BASE}/output/2`);
+                const out2Data = await out2Res.json();
+                const out2 = out2Data.output_2;
+
+                // Update DOM
+                document.getElementById('pv-value').innerText = pv.toFixed(1);
+                document.getElementById('sv-value').innerText = sv.toFixed(1);
+
+                updateColor(pv, sv);
+
+                document.getElementById('out1-text').innerText = `${out1}%`;
+                document.getElementById('out1-bar').style.width = `${Math.min(100, Math.max(0, out1))}%`;
+
+                document.getElementById('out2-text').innerText = `${out2}%`;
+                document.getElementById('out2-bar').style.width = `${Math.min(100, Math.max(0, out2))}%`;
+
+                hideError();
+            } catch (error) {
+                console.error(error);
+                showError("Connection Error");
+            }
+        }
+
+        function updateColor(pv, sv) {
+            // Colors
+            // Red: #ef4444 (239, 68, 68)
+            // Green: #22c55e (34, 197, 94)
+
+            // Logic: Interpolate based on distance. 
+            // If |diff| >= 50, Red.
+            // If diff = 0, Green.
+
+            const diff = Math.abs(pv - sv);
+            const range = 50.0; // Range over which color transitions
+
+            let t = 1.0 - (Math.min(diff, range) / range);
+            // t goes from 0 (far) to 1 (equal) (linear)
+
+            // To make it smoother/more pronounced near target? Linear is fine.
+
+            const startR = 239, startG = 68, startB = 68;
+            const endR = 34, endG = 197, endB = 94;
+
+            const r = Math.round(startR + (endR - startR) * t);
+            const g = Math.round(startG + (endG - startG) * t);
+            const b = Math.round(startB + (endB - startB) * t);
+
+            document.getElementById('pv-value').style.color = `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('error-msg');
+            errDiv.innerText = msg;
+            errDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-msg').style.display = 'none';
+        }
+
+        // Poll every 1 second
+        updateData();
+        setInterval(updateData, 1000);
+    </script>
+</body>
+
+</html>

@@ -382,7 +382,7 @@ def parse_commandline(argv: List[str]) -> Tuple[str, str, int]:
 
 
 def main() -> None:
-    from delta2 import Delta2
+    from delta_2 import Delta2
 
     portname, mode, baudrate = parse_commandline(sys.argv)
     show_test_settings(mode, baudrate, portname)
