@@ -17,6 +17,16 @@ from delta_2 import (
 
 app = FastAPI(title="Delta DTB Controller API")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Configuration
 SLAVE_ADDRESS = 1
 DEFAULT_PORT_NAME = "/dev/ttyUSB0"
