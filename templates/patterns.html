@@ -208,7 +208,9 @@
                 showError(`Error loading pattern ${patternId}: ${error.message}`);
             }
         }
-
+        function goToEdit() {
+            window.location.href = `/patterns/${patternSelect.value}/edit`;
+        }
         function showError(msg) {
             const errDiv = document.getElementById('error-msg');
             errDiv.innerText = msg;
