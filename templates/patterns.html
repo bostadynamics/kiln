@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delta DTB Pattern Visualization</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/chart_utils.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -141,10 +142,11 @@
             </div>
         </div>
 
+        <div id="error-msg" class="error-msg"></div>
         <div id="chart-container">
             <canvas id="patternChart"></canvas>
         </div>
-        <div id="error-msg" class="error-msg"></div>
+
 
         <div class="nav-links">
             <a href="/">Back to Dashboard</a>
@@ -159,12 +161,20 @@
     -->
     <script>
         const API_BASE = ''; // Relative path since we are on the same server
-        let chartInstance = null;
         const patternSelect = document.getElementById('pattern-select');
+        const patternChart = new PatternChart('patternChart');
+
+        // Init Diagram
+        patternChart.init(false); // No current temp line for this view
+
+        const totalStepsEl = document.getElementById('total-steps');
+        const totalDurationEl = document.getElementById('total-duration');
+        let currentPatternId = 0;
 
         // Event Listener for changing pattern
         patternSelect.addEventListener('change', (e) => {
-            loadPattern(e.target.value);
+            currentPatternId = parseInt(e.target.value);
+            loadPattern(currentPatternId);
         });
 
         async function init() {
@@ -201,7 +211,20 @@
                 if (!patternResponse.ok) throw new Error(`Failed to fetch pattern ${patternId}`);
                 const patternData = await patternResponse.json();
 
-                renderChart(patternData.steps);
+                // Update stats
+                let totalSteps = 0;
+                let totalTime = 0;
+                patternData.steps.forEach(s => {
+                    if (s.time > 0 || (s.step === 7 && s.time === 0)) { // Simple heuristic
+                        totalSteps++;
+                        totalTime += s.time;
+                    }
+                });
+                totalStepsEl.innerText = totalSteps;
+                totalDurationEl.innerText = totalTime + " min";
+
+                // Update Chart
+                patternChart.updatePattern(patternData.steps);
                 hideError();
             } catch (error) {
                 console.error(error);
@@ -219,119 +242,6 @@
 
         function hideError() {
             document.getElementById('error-msg').style.display = 'none';
-        }
-
-        function renderChart(steps) {
-
-            const labels = []; // Time points
-            const dataPoints = []; // Temp points
-
-            // Initial Point
-            let currentTime = 0;
-            let currentTemp = 25; // Default start
-
-            labels.push(currentTime);
-            dataPoints.push(currentTemp);
-
-            steps.forEach(step => {
-                const duration = step.time;
-                const targetTemp = step.temp;
-
-                if (duration > 0 || (step.step === 7 && duration === 0)) {
-                    currentTime += duration;
-                    labels.push(currentTime);
-                    dataPoints.push(targetTemp);
-                }
-            });
-
-            document.getElementById('total-steps').innerText = steps.length;
-            document.getElementById('total-duration').innerText = currentTime;
-
-            // Destroy existing chart if any
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
-            const ctx = document.getElementById('patternChart').getContext('2d');
-
-            // Gradient Fill
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Blue 500
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Temperature (°C)',
-                        data: dataPoints,
-                        borderColor: '#3b82f6', // Blue 500
-                        backgroundColor: gradient,
-                        borderWidth: 3,
-                        pointBackgroundColor: '#1e1e1e', // Match card bg
-                        pointBorderColor: '#60a5fa', // Blue 400
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        fill: true,
-                        tension: 0.1 // Slight curve
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: '#374151',
-                            titleColor: '#e5e7eb',
-                            bodyColor: '#e5e7eb',
-                            borderColor: '#4b5563',
-                            borderWidth: 1
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            title: {
-                                display: true,
-                                text: 'Time (minutes)',
-                                color: '#9ca3af'
-                            },
-                            grid: {
-                                color: '#374151'
-                            },
-                            ticks: {
-                                color: '#9ca3af'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Temperature (°C)',
-                                color: '#9ca3af'
-                            },
-                            grid: {
-                                color: '#374151'
-                            },
-                            ticks: {
-                                color: '#9ca3af'
-                            },
-                            beginAtZero: true
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    }
-                }
-            });
         }
 
         // Run on load

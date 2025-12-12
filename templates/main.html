@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delta DTB Main View</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Kiln Controller</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/chart_utils.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -17,7 +19,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
         }
 
@@ -25,84 +26,22 @@
             width: 100%;
             max-width: 600px;
             background-color: #1e1e1e;
-            padding: 3rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-        }
-
-        .temp-display {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-
-        .temp-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .label {
-            color: #9ca3af;
-            font-size: 1rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .value {
-            font-size: 3.5rem;
-            font-weight: 700;
-            transition: color 0.5s ease;
-        }
-
-        .bars-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .bar-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .bar-header {
-            display: flex;
-            justify-content: space-between;
-            color: #e5e7eb;
-            font-weight: 500;
-        }
-
-        .progress-track {
-            height: 24px;
-            background-color: #374151;
+            padding: 2rem;
             border-radius: 12px;
-            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
         }
 
-        .progress-fill {
-            height: 100%;
-            background-color: #3b82f6;
-            /* Blue */
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        .progress-fill.out2 {
-            background-color: #a855f7;
-            /* Purple */
-        }
-
-        .unit {
-            font-size: 1.5rem;
-            color: #6b7280;
+        h1 {
+            text-align: center;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 2rem;
+            color: #fff;
         }
 
         .nav-links {
-            margin-top: 2rem;
+            margin-top: 1.5rem;
+            display: block;
             text-align: center;
         }
 
@@ -115,18 +54,74 @@
         a:hover {
             text-decoration: underline;
         }
+
+        #graph-container {
+            margin-top: 2rem;
+            height: 300px;
+            width: 100%;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container" hx-get="/partials/dashboard" hx-trigger="load, every 1s" hx-swap="innerHTML">
-        <!-- Initial Loading State -->
-        <div style="text-align: center; padding: 2rem;">Loading Data...</div>
+    <div class="container">
+        <h1>Kiln Dashboard</h1>
+
+        <div id="dashboard-container" hx-get="/partials/dashboard" hx-trigger="load, every 1s" hx-swap="innerHTML">
+            <!-- Content loaded via HTMX -->
+            <div style="text-align:center; color: #888;">Loading dashboard...</div>
+        </div>
+
+        <div id="graph-container">
+            <canvas id="liveChart"></canvas>
+        </div>
+
+        <div class="nav-links">
+            <a href="/patterns">View Patterns</a>
+        </div>
     </div>
 
-    <div class="nav-links">
-        <a href="/patterns">View Patterns</a>
-    </div>
+    <script>
+        const chart = new PatternChart('liveChart');
+        let currentPatternId = null;
+        let patternMaxTime = 0;
+
+        // Init with current temp line enabled
+        chart.init(true);
+
+        async function fetchAndDrawPattern(id) {
+            try {
+                const res = await fetch(`/pattern/${id}`);
+                if (!res.ok) throw new Error('Failed to fetch pattern');
+                const data = await res.json();
+
+                patternMaxTime = chart.updatePattern(data.steps);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            if (evt.target.id === 'dashboard-container') {
+                const root = evt.target.querySelector('.temp-display');
+                if (!root) return;
+
+                const pv = parseFloat(root.getAttribute('data-pv'));
+                const pid = parseInt(root.getAttribute('data-pattern'));
+
+                if (isNaN(pv)) return;
+
+                // Pattern Changed?
+                if (!isNaN(pid) && pid !== currentPatternId) {
+                    currentPatternId = pid;
+                    fetchAndDrawPattern(pid);
+                }
+
+                // Update Red Line
+                chart.updateCurrentTempLine(pv, patternMaxTime);
+            }
+        });
+    </script>
 </body>
 
 </html>

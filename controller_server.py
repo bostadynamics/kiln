@@ -1,8 +1,8 @@
 import sys
-from typing import List, Optional, Tuple, Union
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -13,11 +13,11 @@ from delta_2 import (
     Delta2,
     HeatingCoolingSelection,
     RunStopSetting,
-    SystemAlarmSetting,
     TempUnit,
 )
 
 app = FastAPI(title="Delta DTB Controller API")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 from fastapi.middleware.cors import CORSMiddleware
