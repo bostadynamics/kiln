@@ -155,7 +155,7 @@
 
         <div class="actions">
             <div id="status-msg"></div>
-            <button class="btn-cancel" onclick="window.location.href='/patterns'">Cancel</button>
+            <button class="btn-cancel" onclick="goBack()">Cancel</button>
             <button class="btn-save" id="save-btn" onclick="savePattern()">Save Changes</button>
         </div>
     </div>
@@ -164,6 +164,10 @@
         const PATTERN_ID = {{ pattern_id }};
         const API_BASE = '';
         let chartInstance = null;
+
+        function goBack() {
+            window.location.href = `/patterns?selected=${PATTERN_ID}`;
+        }
 
         // Load initial data
         async function loadData() {
@@ -290,18 +294,17 @@
                     if (!res.ok) throw new Error(`Failed at step ${step.step}`);
                 }
 
-                status.innerText = 'Pattern Saved Successfully!';
+                status.innerText = 'Pattern Saved Successfully! Redirecting...';
                 status.style.color = '#22c55e';
 
                 setTimeout(() => {
-                    status.innerText = '';
-                }, 3000);
+                    goBack();
+                }, 1000);
 
             } catch (error) {
                 console.error(error);
                 status.innerText = 'Error Saving: ' + error.message;
                 status.style.color = '#ef4444';
-            } finally {
                 btn.disabled = false;
                 btn.innerText = 'Save Changes';
             }

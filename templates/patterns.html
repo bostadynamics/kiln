@@ -169,16 +169,25 @@
 
         async function init() {
             try {
-                // 1. Get Current Program to set initial selection
-                const progResponse = await fetch(`${API_BASE}/current/program`);
-                if (!progResponse.ok) throw new Error('Failed to fetch current program');
-                const progData = await progResponse.json();
+                const urlParams = new URLSearchParams(window.location.search);
+                const selectedParam = urlParams.get('selected');
 
-                const currentPatternId = progData.pattern;
-                patternSelect.value = currentPatternId;
+                let targetPatternId;
 
-                // 2. Load data for that pattern
-                loadPattern(currentPatternId);
+                if (selectedParam !== null) {
+                    // Use the query parameter if present
+                    targetPatternId = parseInt(selectedParam);
+                } else {
+                    // Otherwise fetch current program
+                    const progResponse = await fetch(`${API_BASE}/current/program`);
+                    if (!progResponse.ok) throw new Error('Failed to fetch current program');
+                    const progData = await progResponse.json();
+                    targetPatternId = progData.pattern;
+                }
+
+                // Set dropdown and load
+                patternSelect.value = targetPatternId;
+                loadPattern(targetPatternId);
 
             } catch (error) {
                 console.error(error);
