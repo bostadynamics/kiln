@@ -163,39 +163,39 @@ def get_temp_range():
 # --- Configuration ---
 
 
-@app.get("/settings/sensor-type")
+@app.get("/setting/sensor-type")
 def get_sensor_type():
     return {"sensor_type": kiln.get_sensor_type()}
 
 
-@app.get("/settings/control-method")
+@app.get("/setting/control-method")
 def get_control_method():
     return {"control_method": kiln.get_control_method()}
 
 
-@app.post("/settings/control-method")
+@app.post("/setting/control-method")
 def set_control_method(req: ControlMethodRequest):
     kiln.set_control_method(req.value)
     return {"status": "ok", "control_method": req.value}
 
 
-@app.get("/settings/heating-cooling")
+@app.get("/setting/heating-cooling")
 def get_heating_cooling_selection():
     return {"heating_cooling": kiln.get_heating_cooling_selection()}
 
 
-@app.post("/settings/heating-cooling")
+@app.post("/setting/heating-cooling")
 def set_heating_cooling_selection(req: HeatingCoolingRequest):
     kiln.set_heating_cooling_selection(req.value)
     return {"status": "ok", "heating_cooling": req.value}
 
 
-@app.get("/settings/temp-unit")
+@app.get("/setting/temp-unit")
 def get_temp_unit():
     return {"temp_unit": kiln.get_temp_unit_display()}
 
 
-@app.post("/settings/temp-unit")
+@app.post("/setting/temp-unit")
 def set_temp_unit(req: TempUnitRequest):
     kiln.set_temp_unit_display(req.value)
     return {"status": "ok", "temp_unit": req.value}
