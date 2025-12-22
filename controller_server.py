@@ -2,24 +2,29 @@ import sys
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 # Ensure we can import delta_2
 sys.path.append(".")
 from delta_2 import (
+    AnalogDecimalSetting,
+    ATSetting,
     ControlMethod,
+    DecimalPointPosition,
     Delta2,
     HeatingCoolingSelection,
+    PIDParameterSelection,
     RunStopSetting,
+    SettingLockStatus,
+    StopSettingPID,
+    SystemAlarmSetting,
+    TemporarilyStopPID,
     TempUnit,
+    ValveFeedbackSetting,
+    AutoTuningValveFeedback,
 )
 
 app = FastAPI(title="Delta DTB Controller API")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -82,6 +87,50 @@ class PatternStepRequest(BaseModel):
 
 class RunStopRequest(BaseModel):
     value: RunStopSetting
+
+
+class LockStatusRequest(BaseModel):
+    value: SettingLockStatus
+
+
+class PIDSelectionRequest(BaseModel):
+    value: PIDParameterSelection
+
+
+class AnalogDecimalRequest(BaseModel):
+    value: AnalogDecimalSetting
+
+
+class ValveFeedbackRequest(BaseModel):
+    value: ValveFeedbackSetting
+
+
+class ATValveFeedbackRequest(BaseModel):
+    value: AutoTuningValveFeedback
+
+
+class DecimalPointRequest(BaseModel):
+    value: DecimalPointPosition
+
+
+class ATSettingRequest(BaseModel):
+    value: ATSetting
+
+
+class StopSettingPIDRequest(BaseModel):
+    value: StopSettingPID
+
+
+class TempStopPIDRequest(BaseModel):
+    value: TemporarilyStopPID
+
+
+class SystemAlarmRequest(BaseModel):
+    value: SystemAlarmSetting
+
+
+class SensorTypeRequest(BaseModel):
+    value: int
 
 
 # --- Core Values ---
@@ -152,6 +201,132 @@ def set_temp_unit(req: TempUnitRequest):
     return {"status": "ok", "temp_unit": req.value}
 
 
+@app.get("/settings/all")
+def get_all_settings():
+    return {
+        "control_method": kiln.get_control_method(),
+        "heating_cooling": kiln.get_heating_cooling_selection(),
+        "temp_unit": kiln.get_temp_unit_display(),
+        "sensor_type": kiln.get_sensor_type(),
+        "lock_status": kiln.get_setting_lock_status(),
+        "pid_selection": kiln.get_pid_parameter_selection(),
+        "analog_decimal": kiln.get_analog_decimal_setting(),
+        "valve_feedback": kiln.get_valve_feedback_setting(),
+        "at_valve_feedback": kiln.get_auto_tuning_valve_feedback(),
+        "decimal_point": kiln.get_decimal_point_position(),
+        "at_setting": kiln.get_at_setting(),
+        "run_stop": kiln.get_run_stop_setting(),
+        "stop_pid": kiln.get_stop_setting_pid(),
+        "temp_stop_pid": kiln.get_temporarily_stop_pid(),
+        "system_alarm": kiln.get_system_alarm_setting(),
+    }
+
+
+@app.get("/setting/lock-status")
+def get_lock_status():
+    return {"lock_status": kiln.get_setting_lock_status()}
+
+
+@app.post("/setting/lock-status")
+def set_lock_status(req: LockStatusRequest):
+    kiln.set_setting_lock_status(req.value)
+    return {"status": "ok", "lock_status": req.value}
+
+
+@app.get("/setting/pid-selection")
+def get_pid_selection():
+    return {"pid_selection": kiln.get_pid_parameter_selection()}
+
+
+@app.post("/setting/pid-selection")
+def set_pid_selection(req: PIDSelectionRequest):
+    kiln.set_pid_parameter_selection(req.value)
+    return {"status": "ok", "pid_selection": req.value}
+
+
+@app.get("/setting/analog-decimal")
+def get_analog_decimal():
+    return {"analog_decimal": kiln.get_analog_decimal_setting()}
+
+
+@app.post("/setting/analog-decimal")
+def set_analog_decimal(req: AnalogDecimalRequest):
+    kiln.set_analog_decimal_setting(req.value)
+    return {"status": "ok", "analog_decimal": req.value}
+
+
+@app.get("/setting/valve-feedback")
+def get_valve_feedback():
+    return {"valve_feedback": kiln.get_valve_feedback_setting()}
+
+
+@app.post("/setting/valve-feedback")
+def set_valve_feedback(req: ValveFeedbackRequest):
+    kiln.set_valve_feedback_setting(req.value)
+    return {"status": "ok", "valve_feedback": req.value}
+
+
+@app.get("/setting/at-valve-feedback")
+def get_at_valve_feedback():
+    return {"at_valve_feedback": kiln.get_auto_tuning_valve_feedback()}
+
+
+@app.post("/setting/at-valve-feedback")
+def set_at_valve_feedback(req: ATValveFeedbackRequest):
+    kiln.set_auto_tuning_valve_feedback(req.value)
+    return {"status": "ok", "at_valve_feedback": req.value}
+
+
+@app.get("/setting/decimal-point")
+def get_decimal_point():
+    return {"decimal_point": kiln.get_decimal_point_position()}
+
+
+@app.post("/setting/decimal-point")
+def set_decimal_point(req: DecimalPointRequest):
+    kiln.set_decimal_point_position(req.value)
+    return {"status": "ok", "decimal_point": req.value}
+
+
+@app.get("/setting/at-setting")
+def get_at_setting():
+    return {"at_setting": kiln.get_at_setting()}
+
+
+@app.post("/setting/at-setting")
+def set_at_setting(req: ATSettingRequest):
+    kiln.set_at_setting(req.value)
+    return {"status": "ok", "at_setting": req.value}
+
+
+@app.get("/setting/stop-pid")
+def get_stop_pid():
+    return {"stop_pid": kiln.get_stop_setting_pid()}
+
+
+@app.post("/setting/stop-pid")
+def set_stop_pid(req: StopSettingPIDRequest):
+    kiln.set_stop_setting_pid(req.value)
+    return {"status": "ok", "stop_pid": req.value}
+
+
+@app.get("/setting/temp-stop-pid")
+def get_temp_stop_pid():
+    return {"temp_stop_pid": kiln.get_temporarily_stop_pid()}
+
+
+@app.post("/setting/temp-stop-pid")
+def set_temp_stop_pid(req: TempStopPIDRequest):
+    kiln.set_temporarily_stop_pid(req.value)
+    return {"status": "ok", "temp_stop_pid": req.value}
+
+
+@app.post("/sensor-type")
+def set_sensor_type(req: SensorTypeRequest):
+    kiln.set_sensor_type(req.value)
+    return {"status": "ok", "sensor_type": req.value}
+
+
 # --- PID Parameters ---
 
 
@@ -215,6 +390,12 @@ def set_output_value(index: int, req: OutputRequest):
 @app.get("/alarm/system")
 def get_system_alarm():
     return {"system_alarm": kiln.get_system_alarm_setting()}
+
+
+@app.post("/alarm/system")
+def set_system_alarm(req: SystemAlarmRequest):
+    kiln.set_system_alarm_setting(req.value)
+    return {"status": "ok", "system_alarm": req.value}
 
 
 @app.get("/alarm/{index}/type")
@@ -316,13 +497,6 @@ def set_run_status(req: RunStopRequest):
     return {"status": "ok", "run_status": req.value}
 
 
-@app.get("/patterns/{id}/edit", response_class=HTMLResponse)
-async def pattern_editor(id: int, request: Request):
-    return templates.TemplateResponse(
-        "pattern_editor.html", {"request": request, "pattern_id": id}
-    )
-
-
 @app.get("/status/keys")
 def get_key_status():
     return {
@@ -331,77 +505,3 @@ def get_key_status():
         "up": kiln.get_key_up_status(),
         "down": kiln.get_key_down_status(),
     }
-
-
-from fastapi import Request
-from fastapi.responses import HTMLResponse
-
-
-def calculate_color(pv, sv):
-    """Calculates color transitioning from Red to Green based on distance."""
-    diff = abs(pv - sv)
-    range_val = 50.0  # Range for transition
-
-    # 0.0 (far) to 1.0 (close)
-    t = 1.0 - (min(diff, range_val) / range_val)
-
-    # Red: 239, 68, 68 (#ef4444)
-    # Green: 34, 197, 94 (#22c55e)
-
-    start_r, start_g, start_b = 239, 68, 68
-    end_r, end_g, end_b = 34, 197, 94
-
-    r = int(start_r + (end_r - start_r) * t)
-    g = int(start_g + (end_g - start_g) * t)
-    b = int(start_b + (end_b - start_b) * t)
-
-    return f"rgb({r}, {g}, {b})"
-
-
-@app.get("/", response_class=HTMLResponse)
-async def main_view(request: Request):
-    return templates.TemplateResponse("main.html", {"request": request})
-
-
-@app.get("/patterns", response_class=HTMLResponse)
-async def patterns_view(request: Request):
-    return templates.TemplateResponse("patterns.html", {"request": request})
-
-
-@app.get("/partials/dashboard", response_class=HTMLResponse)
-async def get_dashboard_partial(request: Request):
-    # Fetch values
-    try:
-        pv = kiln.get_pv()
-        setpoint = kiln.get_setpoint()
-        output1 = kiln.get_output_1_value()
-        output2 = kiln.get_output_2_value()
-
-        pv_color = calculate_color(pv, setpoint)
-
-        # Fetch status
-        current_pattern = kiln.get_executing_pattern_number()
-        current_step = kiln.get_executing_step_number()
-        time_left = f"{kiln.get_step_time_left_min()}m {kiln.get_step_time_left_sec()}s"
-
-        return templates.TemplateResponse(
-            "partials/dashboard.html",
-            {
-                "request": request,
-                "pv": pv,
-                "setpoint": setpoint,
-                "output1": output1,
-                "output2": output2,
-                "pv_color": pv_color,
-                "pattern": current_pattern,
-                "step": current_step,
-                "time_left": time_left,
-            },
-        )
-    except Exception as e:
-        # Return error fragment or log
-        print(f"Error fetching data: {e}")
-        # Return a simple error div if fails
-        return HTMLResponse(
-            f"<div class='error-msg' style='display:block'>Error: {str(e)}</div>"
-        )
