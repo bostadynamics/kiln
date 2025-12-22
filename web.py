@@ -133,7 +133,7 @@ async def get_dashboard_partial(request: Request):
         time_left = f"{status.get('time_left_min')}m {status.get('time_left_sec')}s"
 
         # Fetch settings for the UI to know what can be edited
-        start_pattern = await kiln.get_start_pattern()
+        # start_pattern = await kiln.get_start_pattern()
         actual_steps = await kiln.get_actual_steps(current_pattern)
 
         return templates.TemplateResponse(
@@ -148,7 +148,7 @@ async def get_dashboard_partial(request: Request):
                 "pattern": current_pattern,
                 "step": current_step,
                 "time_left": time_left,
-                "start_pattern": start_pattern,
+                # "start_pattern": start_pattern,
                 "actual_steps": actual_steps,
             },
         )
@@ -186,7 +186,7 @@ async def set_pattern_step_api(id: int, step_id: int, req: PatternStepRequest):
     return await kiln.set_pattern_step(id, step_id, req.temp, req.time)
 
 
-@app.post("/pattern/start/update")
+@app.post("/pattern_start/update")
 async def update_start_pattern(request: Request):
     form_data = await request.form()
     value = form_data.get("value")

@@ -169,12 +169,12 @@ class KilnClient:
         return resp.json()
 
     async def get_start_pattern(self) -> int:
-        resp = await self.client.get("/pattern/start")
+        resp = await self.client.get("/pattern_start")
         resp.raise_for_status()
         return resp.json()["start_pattern"]
 
     async def set_start_pattern(self, value: int) -> Dict[str, Any]:
-        resp = await self.client.post("/pattern/start", json={"value": value})
+        resp = await self.client.post("/pattern_start", json={"value": value})
         resp.raise_for_status()
         return resp.json()
 

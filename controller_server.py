@@ -455,12 +455,12 @@ def set_pattern_step(id: int, step_id: int, req: PatternStepRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/pattern/start")
+@app.get("/pattern_start")
 def get_start_pattern():
     return {"start_pattern": kiln.get_start_pattern_number()}
 
 
-@app.post("/pattern/start")
+@app.post("/pattern_start")
 def set_start_pattern(req: IntValueRequest):
     try:
         kiln.set_start_pattern_number(req.value)

@@ -46,7 +46,7 @@
             <div id="pattern-display" style="font-size: 1.25rem; font-weight: 600;">{{ pattern }}</div>
             <select id="pattern-select" name="value"
                 style="display: none; font-size: 1rem; background: #333; color: white; border: 1px solid #555; border-radius: 4px;"
-                hx-post="/pattern/start/update" hx-target="#dashboard-container" hx-trigger="change"
+                hx-post="/pattern_start/update" hx-target="#dashboard-container" hx-trigger="change"
                 onblur="this.style.display='none'; document.getElementById('pattern-display').style.display='block';">
                 {% for i in range(8) %}
                 <option value="{{ i }}" {% if i==start_pattern %}selected{% endif %}>{{ i }}</option>
