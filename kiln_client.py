@@ -168,6 +168,28 @@ class KilnClient:
         resp.raise_for_status()
         return resp.json()
 
+    async def get_start_pattern(self) -> int:
+        resp = await self.client.get("/pattern/start")
+        resp.raise_for_status()
+        return resp.json()["start_pattern"]
+
+    async def set_start_pattern(self, value: int) -> Dict[str, Any]:
+        resp = await self.client.post("/pattern/start", json={"value": value})
+        resp.raise_for_status()
+        return resp.json()
+
+    async def get_actual_steps(self, pattern_id: int) -> int:
+        resp = await self.client.get(f"/pattern/{pattern_id}/actual-steps")
+        resp.raise_for_status()
+        return resp.json()["actual_steps"]
+
+    async def set_actual_steps(self, pattern_id: int, value: int) -> Dict[str, Any]:
+        resp = await self.client.post(
+            f"/pattern/{pattern_id}/actual-steps", json={"value": value}
+        )
+        resp.raise_for_status()
+        return resp.json()
+
     # Generic Settings
     async def get_all_settings(self) -> Dict[str, Any]:
         resp = await self.client.get("/settings/all")

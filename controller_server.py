@@ -1,7 +1,6 @@
 import sys
 
-from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 # Ensure we can import delta_2
@@ -130,6 +129,10 @@ class SystemAlarmRequest(BaseModel):
 
 
 class SensorTypeRequest(BaseModel):
+    value: int
+
+
+class IntValueRequest(BaseModel):
     value: int
 
 
@@ -448,6 +451,40 @@ def set_pattern_step(id: int, step_id: int, req: PatternStepRequest):
     try:
         kiln.set_pattern_step(id, step_id, req.temp, req.time)
         return {"status": "ok", "pattern": id, "step": step_id, "data": req}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/pattern/start")
+def get_start_pattern():
+    return {"start_pattern": kiln.get_start_pattern_number()}
+
+
+@app.post("/pattern/start")
+def set_start_pattern(req: IntValueRequest):
+    try:
+        kiln.set_start_pattern_number(req.value)
+        return {"status": "ok", "start_pattern": req.value}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/pattern/{id}/actual-steps")
+def get_actual_steps(id: int):
+    try:
+        return {
+            "pattern_id": id,
+            "actual_steps": kiln.get_actual_step_number_setting(id),
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/pattern/{id}/actual-steps")
+def set_actual_steps(id: int, req: IntValueRequest):
+    try:
+        kiln.set_actual_step_number_setting(id, req.value)
+        return {"status": "ok", "pattern_id": id, "actual_steps": req.value}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
