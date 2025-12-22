@@ -9,6 +9,7 @@ sys.path.append(".")
 from delta_2 import (
     AnalogDecimalSetting,
     ATSetting,
+    AutoTuningValveFeedback,
     ControlMethod,
     DecimalPointPosition,
     Delta2,
@@ -21,7 +22,6 @@ from delta_2 import (
     TemporarilyStopPID,
     TempUnit,
     ValveFeedbackSetting,
-    AutoTuningValveFeedback,
 )
 
 app = FastAPI(title="Delta DTB Controller API")
