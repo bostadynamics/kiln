@@ -21,7 +21,6 @@ class PatternChart {
                 order: 2
             }
         ];
-
         if (showCurrentTemp) {
             datasets.push({
                 label: 'Current Temp',
@@ -32,6 +31,17 @@ class PatternChart {
                 borderDash: [5, 5],
                 fill: false,
                 order: 1
+            });
+
+            datasets.push({
+                label: 'Live Recording',
+                data: [],
+                borderColor: '#10b981', // Emerald green
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: false,
+                order: 0
             });
         }
 
@@ -115,6 +125,21 @@ class PatternChart {
             { x: 0, y: pv },
             { x: maxX, y: pv }
         ];
+        this.chart.update('none');
+    }
+
+    updateRecordingData(records) {
+        if (!this.chart || this.chart.data.datasets.length < 3) return;
+
+        // Filter valid points and map to {x, y}
+        // records is [{timestamp, time_passed, temperature}, ...]
+        // time_passed is in seconds, chart is in minutes
+        const points = records.map(r => ({
+            x: r.time_passed / 60.0,
+            y: r.temperature
+        }));
+
+        this.chart.data.datasets[2].data = points;
         this.chart.update('none');
     }
 }

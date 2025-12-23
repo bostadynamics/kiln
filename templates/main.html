@@ -138,7 +138,7 @@
     <div class="container">
         <h1>Kiln Dashboard</h1>
 
-        <div id="dashboard-container" hx-get="/partials/dashboard" hx-trigger="load, every 10s" hx-swap="innerHTML">
+        <div id="dashboard-container" hx-get="/partials/dashboard" hx-trigger="load, every 1s" hx-swap="innerHTML">
             <!-- Content loaded via HTMX -->
             <div style="text-align:center; color: #888;">Loading dashboard...</div>
         </div>
@@ -176,6 +176,17 @@
             }
         }
 
+        async function fetchAndDrawRecording() {
+            try {
+                const res = await fetch('/api/recording');
+                if (!res.ok) throw new Error('Failed to fetch recording');
+                const data = await res.json();
+                chart.updateRecordingData(data);
+            } catch (e) {
+                console.error('Error fetching recording:', e);
+            }
+        }
+
         document.body.addEventListener('htmx:afterSwap', function (evt) {
             if (evt.target.id === 'dashboard-container') {
                 const root = evt.target.querySelector('.temp-display');
@@ -198,6 +209,9 @@
 
                 // Update Red Line
                 chart.updateCurrentTempLine(pv, patternMaxTime);
+
+                // Update Recording Line
+                fetchAndDrawRecording();
             }
         });
     </script>

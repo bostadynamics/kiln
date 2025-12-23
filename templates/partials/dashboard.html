@@ -59,7 +59,7 @@
         <div id="step-container" style="cursor: pointer;"
             onclick="document.getElementById('step-display').style.display='none'; document.getElementById('step-select').style.display='block'; document.getElementById('step-select').focus();">
             <div id="step-display" style="font-size: 1.25rem; font-weight: 600;">{{ step }}</div>
-            <select id="step-select" name="value"
+            <!-- <select id="step-select" name="value"
                 style="display: none; font-size: 1rem; background: #333; color: white; border: 1px solid #555; border-radius: 4px;"
                 hx-post="/pattern/{{ pattern }}/actual-steps/update" hx-target="#dashboard-container"
                 hx-trigger="change"
@@ -67,7 +67,7 @@
                 {% for i in range(8) %}
                 <option value="{{ i }}" {% if i==actual_steps %}selected{% endif %}>{{ i }}</option>
                 {% endfor %}
-            </select>
+            </select> -->
         </div>
     </div>
     <div style="text-align: center;">
@@ -75,3 +75,42 @@
         <div style="font-size: 1.25rem; font-weight: 600;">{{ time_left }}</div>
     </div>
 </div>
+
+<div class="recording-controls"
+    style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div
+            style="width: 10px; height: 10px; border-radius: 50%; background: {% if is_recording %}#ef4444{% else %}#4b5563{% endif %}; {% if is_recording %}box-shadow: 0 0 8px #ef4444; animation: pulse 2s infinite;{% endif %}">
+        </div>
+        <span class="label" style="font-size: 0.875rem;">{% if is_recording %}Recording...{% else %}Stopped{% endif
+            %}</span>
+    </div>
+
+    {% if is_recording %}
+    <button hx-post="/recording/stop" hx-target="#dashboard-container"
+        style="background: #374151; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        Stop Recording
+    </button>
+    {% else %}
+    <button hx-post="/recording/start" hx-target="#dashboard-container"
+        style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        Start Recording
+    </button>
+    {% endif %}
+</div>
+
+<style>
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+</style>
