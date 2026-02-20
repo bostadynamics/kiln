@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  valkey:
+    image: valkey/valkey:latest
+    container_name: kiln-valkey
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  controller-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kiln-controller
+    ports:
+      - "8000:8000"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    # Privileged is often required for serial port access in Docker
+    privileged: true
+    security_opt:
+      - label=disable
+    restart: unless-stopped
+    depends_on:
+      valkey:
+        condition: service_healthy
+    environment:
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
+      - DEFAULT_PORT_NAME=/dev/ttyUSB0
+    volumes:
+      - .:/app

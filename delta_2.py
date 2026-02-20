@@ -159,11 +159,11 @@ class Delta2(minimalmodbus.Instrument):
         """Write Control method. 0: PID, 1: ON/OFF, 2: Manual tuning, 3: PID program control."""
         self.write_register(0x1005, int(value))
 
-    def get_heating_cooling_selection(self):
+    def get_heating_cooling(self):
         """Read Heating/Cooling selection. 0: Heating, 1: Cooling, 2: Heating/Cooling, 3: Cooling/Heating."""
         return HeatingCoolingSelection(self.read_register(0x1006))
 
-    def set_heating_cooling_selection(self, value):
+    def set_heating_cooling(self, value):
         """Write Heating/Cooling selection. 0: Heating, 1: Cooling, 2: Heating/Cooling, 3: Cooling/Heating."""
         self.write_register(0x1006, int(value))
 
@@ -229,19 +229,19 @@ class Delta2(minimalmodbus.Instrument):
         """Write PD control offset (when Ti=0). 0 ~ 100%, unit is 0.1%."""
         self.write_register(0x100D, value, 1)
 
-    def get_coef_setting(self):
+    def get_coef(self):
         """Read COEF setting (Dual Loop). 0.01 ~ 99.99."""
         return self.read_register(0x100E, 2)
 
-    def set_coef_setting(self, value):
+    def set_coef(self, value):
         """Write COEF setting (Dual Loop). 0.01 ~ 99.99."""
         self.write_register(0x100E, value, 2)
 
-    def get_dead_band_setting(self):
+    def get_dead_band(self):
         """Read Dead band setting (Dual Loop). -999 ~ 9,999."""
         return self.read_register(0x100F)
 
-    def set_dead_band_setting(self, value):
+    def set_dead_band(self, value):
         """Write Dead band setting (Dual Loop). -999 ~ 9,999."""
         self.write_register(0x100F, value)
 
@@ -293,19 +293,19 @@ class Delta2(minimalmodbus.Instrument):
         """Write Lower-limit analog regulation."""
         self.write_register(0x1015, value)
 
-    def get_temperature_regulation_value(self):
+    def get_temperature_regulation(self):
         """Read Temperature regulation value. -999 ~ +999, unit: 0.1."""
         return self.read_register(0x1016, 1)
 
-    def set_temperature_regulation_value(self, value):
+    def set_temperature_regulation(self, value):
         """Write Temperature regulation value. -999 ~ +999, unit: 0.1."""
         self.write_register(0x1016, value, 1)
 
-    def get_analog_decimal_setting(self):
+    def get_analog_decimal(self):
         """Read Analog decimal setting. 0 ~ 3."""
         return AnalogDecimalSetting(self.read_register(0x1017))
 
-    def set_analog_decimal_setting(self, value):
+    def set_analog_decimal(self, value):
         """Write Analog decimal setting. 0 ~ 3."""
         self.write_register(0x1017, int(value))
 
@@ -341,11 +341,11 @@ class Delta2(minimalmodbus.Instrument):
         """Write Valve feedback lower-limit. 0 ~ 1,024."""
         self.write_register(0x101B, value)
 
-    def get_pid_parameter_selection(self):
+    def get_pid_selection(self):
         """Read PID parameter selection. 0 ~ 4."""
         return PIDParameterSelection(self.read_register(0x101C))
 
-    def set_pid_parameter_selection(self, value):
+    def set_pid_selection(self, value):
         """Write PID parameter selection. 0 ~ 4."""
         self.write_register(0x101C, int(value))
 
@@ -377,11 +377,11 @@ class Delta2(minimalmodbus.Instrument):
         """Write Alarm 3 type."""
         self.write_register(0x1022, value)
 
-    def get_system_alarm_setting(self):
+    def get_system_alarm(self):
         """Read System alarm setting. 0: None (default), 1-3: Set Alarm 1 to Alarm 3."""
         return SystemAlarmSetting(self.read_register(0x1023))
 
-    def set_system_alarm_setting(self, value):
+    def set_system_alarm(self, value):
         """Write System alarm setting. 0: None (default), 1-3: Set Alarm 1 to Alarm 3."""
         self.write_register(0x1023, int(value))
 
@@ -445,11 +445,11 @@ class Delta2(minimalmodbus.Instrument):
         """
         return self.read_register(0x102B)
 
-    def get_setting_lock_status(self):
+    def get_lock_status(self):
         """Read Setting lock status. 0: Normal, 1: All setting lock, 11: Lock others than SV value."""
         return SettingLockStatus(self.read_register(0x102C))
 
-    def set_setting_lock_status(self, value):
+    def set_lock_status(self, value):
         """Write Setting lock status."""
         self.write_register(0x102C, int(value))
 
@@ -461,11 +461,11 @@ class Delta2(minimalmodbus.Instrument):
         """Read Software version. V1.00 indicates 0x100."""
         return self.read_register(0x102F)
 
-    def get_start_pattern_number(self):
+    def get_start_pattern(self):
         """Read Start pattern number. 0-7."""
         return self.read_register(0x1030)
 
-    def set_start_pattern_number(self, value):
+    def set_start_pattern(self, value):
         """Write Start pattern number. 0-7."""
         self.write_register(0x1030, value)
 
@@ -500,7 +500,7 @@ class Delta2(minimalmodbus.Instrument):
         """Read dynamic set value."""
         return self.read_register(0x1036, 1)  # Assuming unit 0.1 same as PV/SV
 
-    def get_actual_step_number_setting(self, pattern_index):
+    def get_actual_steps(self, pattern_index):
         """Read Actual step No. setting for pattern 0-7.
         Address 1040H - 1047H.
         """
@@ -508,7 +508,7 @@ class Delta2(minimalmodbus.Instrument):
             raise ValueError("Pattern index must be between 0 and 7")
         return self.read_register(0x1040 + pattern_index)
 
-    def set_actual_step_number_setting(self, pattern_index, value):
+    def set_actual_steps(self, pattern_index, value):
         """Write Actual step No. setting for pattern 0-7."""
         if not 0 <= pattern_index <= 7:
             raise ValueError("Pattern index must be between 0 and 7")
@@ -528,7 +528,7 @@ class Delta2(minimalmodbus.Instrument):
             raise ValueError("Pattern index must be between 0 and 7")
         self.write_register(0x1050 + pattern_index, value)
 
-    def get_link_pattern_number(self, pattern_index):
+    def get_link_pattern(self, pattern_index):
         """Read Link pattern number for pattern 0-7.
         Address 1060H - 1067H.
         """
@@ -536,7 +536,7 @@ class Delta2(minimalmodbus.Instrument):
             raise ValueError("Pattern index must be between 0 and 7")
         return self.read_register(0x1060 + pattern_index)
 
-    def set_link_pattern_number(self, pattern_index, value):
+    def set_link_pattern(self, pattern_index, value):
         """Write Link pattern number for pattern 0-7."""
         if not 0 <= pattern_index <= 7:
             raise ValueError("Pattern index must be between 0 and 7")
@@ -663,66 +663,66 @@ class Delta2(minimalmodbus.Instrument):
         """Write Communication write-in. 0: Disabled (default), 1: Enabled."""
         self.write_bit(0x0810, value)
 
-    def get_temp_unit_display(self):
+    def get_temp_unit(self):
         """Read Temp unit display. 1: degC/linear (default); 0: degF."""
         return TempUnit(self.read_bit(0x0811))
 
-    def set_temp_unit_display(self, value):
+    def set_temp_unit(self, value):
         """Write Temp unit display. 1: degC/linear (default); 0: degF."""
         self.write_bit(0x0811, int(value))
 
-    def get_decimal_point_position(self):
+    def get_decimal_point(self):
         """Read Decimal point position. Valid for all except B, S, R type. (0 or 1)."""
         return DecimalPointPosition(self.read_bit(0x0812))
 
-    def set_decimal_point_position(self, value):
+    def set_decimal_point(self, value):
         """Write Decimal point position. Valid for all except B, S, R type. (0 or 1)."""
         self.write_bit(0x0812, int(value))
 
-    def get_at_setting(self):
+    def get_at(self):
         """Read AT setting. 0: OFF (default), 1: ON."""
         return ATSetting(self.read_bit(0x0813))
 
-    def set_at_setting(self, value):
+    def set_at(self, value):
         """Write AT setting. 0: OFF (default), 1: ON."""
         self.write_bit(0x0813, int(value))
 
-    def get_run_stop_setting(self):
+    def get_run_stop(self):
         """Read Control RUN/STOP setting. 0: STOP, 1: RUN (default)."""
         return RunStopSetting(self.read_bit(0x0814))
 
-    def set_run_stop_setting(self, value):
+    def set_run_stop(self, value):
         """Write Control RUN/STOP setting. 0: STOP, 1: RUN (default)."""
         self.write_bit(0x0814, int(value))
 
-    def get_stop_setting_pid(self):
+    def get_stop_pid(self):
         """Read STOP setting (PID program). 0: RUN (default), 1: STOP."""
         return StopSettingPID(self.read_bit(0x0815))
 
-    def set_stop_setting_pid(self, value):
+    def set_stop_pid(self, value):
         """Write STOP setting (PID program). 0: RUN (default), 1: STOP."""
         self.write_bit(0x0815, int(value))
 
-    def get_temporarily_stop_pid(self):
+    def get_temp_stop_pid(self):
         """Read Temporarily STOP (PID program). 0: RUN (default), 1: Temporarily STOP."""
         return TemporarilyStopPID(self.read_bit(0x0816))
 
-    def set_temporarily_stop_pid(self, value):
+    def set_temp_stop_pid(self, value):
         """Write Temporarily STOP (PID program). 0: RUN (default), 1: Temporarily STOP."""
         self.write_bit(0x0816, int(value))
 
-    def get_valve_feedback_setting(self):
+    def get_valve_feedback(self):
         """Read Valve feedback setting. 0: w/o feedback (default), 1: feedback function."""
         return ValveFeedbackSetting(self.read_bit(0x0817))
 
-    def set_valve_feedback_setting(self, value):
+    def set_valve_feedback(self, value):
         """Write Valve feedback setting. 0: w/o feedback (default), 1: feedback function."""
         self.write_bit(0x0817, int(value))
 
-    def get_auto_tuning_valve_feedback(self):
+    def get_at_valve_feedback(self):
         """Read Auto-tuning valve feedback. 0: Stop AT (default), 1: Start AT."""
         return AutoTuningValveFeedback(self.read_bit(0x0818))
 
-    def set_auto_tuning_valve_feedback(self, value):
+    def set_at_valve_feedback(self, value):
         """Write Auto-tuning valve feedback. 0: Stop AT (default), 1: Start AT."""
         self.write_bit(0x0818, int(value))

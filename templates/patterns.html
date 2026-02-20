@@ -160,7 +160,7 @@
       The chart logic remains in JS for best interactivity and performance.
     -->
     <script>
-        const API_BASE = ''; // Relative path since we are on the same server
+        const API_BASE = 'http://localhost:8000'; // Target the hardware server directly
         const patternSelect = document.getElementById('pattern-select');
         const patternChart = new PatternChart('patternChart');
 

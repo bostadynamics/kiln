@@ -1,30 +1,32 @@
 # src/routers/hardware.py
 import asyncio
-from fastapi import APIRouter, HTTPException, Depends
 from typing import Any
-from .monitoring import get_kiln
+
+from fastapi import APIRouter, Depends, HTTPException
+
 from ..core.models import (
-    SetpointRequest,
-    ControlMethodRequest,
-    HeatingCoolingRequest,
-    TempUnitRequest,
-    PIDRequest,
-    OutputRequest,
-    RunStopRequest,
-    LockStatusRequest,
-    PIDSelectionRequest,
     AnalogDecimalRequest,
-    ValveFeedbackRequest,
-    ATValveFeedbackRequest,
-    DecimalPointRequest,
     ATSettingRequest,
-    StopSettingPIDRequest,
-    TempStopPIDRequest,
-    SystemAlarmRequest,
-    SensorTypeRequest,
-    PatternStepRequest,
+    ATValveFeedbackRequest,
+    ControlMethodRequest,
+    DecimalPointRequest,
+    HeatingCoolingRequest,
     IntValueRequest,
+    LockStatusRequest,
+    OutputRequest,
+    PatternStepRequest,
+    PIDRequest,
+    PIDSelectionRequest,
+    RunStopRequest,
+    SensorTypeRequest,
+    SetpointRequest,
+    StopSettingPIDRequest,
+    SystemAlarmRequest,
+    TempStopPIDRequest,
+    TempUnitRequest,
+    ValveFeedbackRequest,
 )
+from .monitoring import get_kiln
 
 router = APIRouter(tags=["hardware"])
 
@@ -88,7 +90,7 @@ async def set_control_method(req: ControlMethodRequest, kiln: Any = Depends(get_
 
 @router.get("/setting/heating-cooling")
 async def get_heating_cooling_selection(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_heating_cooling_selection")
+    val = await _eval(kiln, "get_heating_cooling")
     return {"heating_cooling": val}
 
 
@@ -96,19 +98,19 @@ async def get_heating_cooling_selection(kiln: Any = Depends(get_kiln)):
 async def set_heating_cooling_selection(
     req: HeatingCoolingRequest, kiln: Any = Depends(get_kiln)
 ):
-    await _eval(kiln, "set_heating_cooling_selection", req.value)
+    await _eval(kiln, "set_heating_cooling", req.value)
     return {"status": "ok", "heating_cooling": req.value}
 
 
 @router.get("/setting/temp-unit")
 async def get_temp_unit(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_temp_unit_display")
+    val = await _eval(kiln, "get_temp_unit")
     return {"temp_unit": val}
 
 
 @router.post("/setting/temp-unit")
 async def set_temp_unit(req: TempUnitRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_temp_unit_display", req.value)
+    await _eval(kiln, "set_temp_unit", req.value)
     return {"status": "ok", "temp_unit": req.value}
 
 
@@ -123,74 +125,74 @@ async def get_all_settings(kiln: Any = Depends(get_kiln)):
     # Fallback to individual calls
     return {
         "control_method": await _eval(kiln, "get_control_method"),
-        "heating_cooling": await _eval(kiln, "get_heating_cooling_selection"),
-        "temp_unit": await _eval(kiln, "get_temp_unit_display"),
+        "heating_cooling": await _eval(kiln, "get_heating_cooling"),
+        "temp_unit": await _eval(kiln, "get_temp_unit"),
         "sensor_type": await _eval(kiln, "get_sensor_type"),
-        "lock_status": await _eval(kiln, "get_setting_lock_status"),
-        "pid_selection": await _eval(kiln, "get_pid_parameter_selection"),
-        "analog_decimal": await _eval(kiln, "get_analog_decimal_setting"),
-        "valve_feedback": await _eval(kiln, "get_valve_feedback_setting"),
-        "at_valve_feedback": await _eval(kiln, "get_auto_tuning_valve_feedback"),
-        "decimal_point": await _eval(kiln, "get_decimal_point_position"),
-        "at_setting": await _eval(kiln, "get_at_setting"),
-        "run_stop": await _eval(kiln, "get_run_stop_setting"),
-        "stop_pid": await _eval(kiln, "get_stop_setting_pid"),
-        "temp_stop_pid": await _eval(kiln, "get_temporarily_stop_pid"),
-        "system_alarm": await _eval(kiln, "get_system_alarm_setting"),
+        "lock_status": await _eval(kiln, "get_lock_status"),
+        "pid_selection": await _eval(kiln, "get_pid_selection"),
+        "analog_decimal": await _eval(kiln, "get_analog_decimal"),
+        "valve_feedback": await _eval(kiln, "get_valve_feedback"),
+        "at_valve_feedback": await _eval(kiln, "get_at_valve_feedback"),
+        "decimal_point": await _eval(kiln, "get_decimal_point"),
+        "at_setting": await _eval(kiln, "get_at"),
+        "run_stop": await _eval(kiln, "get_run_stop"),
+        "stop_pid": await _eval(kiln, "get_stop_pid"),
+        "temp_stop_pid": await _eval(kiln, "get_temp_stop_pid"),
+        "system_alarm": await _eval(kiln, "get_system_alarm"),
     }
 
 
 @router.get("/setting/lock-status")
 async def get_lock_status(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_setting_lock_status")
+    val = await _eval(kiln, "get_lock_status")
     return {"lock_status": val}
 
 
 @router.post("/setting/lock-status")
 async def set_lock_status(req: LockStatusRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_setting_lock_status", req.value)
+    await _eval(kiln, "set_lock_status", req.value)
     return {"status": "ok", "lock_status": req.value}
 
 
 @router.get("/setting/pid-selection")
 async def get_pid_selection(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_pid_parameter_selection")
+    val = await _eval(kiln, "get_pid_selection")
     return {"pid_selection": val}
 
 
 @router.post("/setting/pid-selection")
 async def set_pid_selection(req: PIDSelectionRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_pid_parameter_selection", req.value)
+    await _eval(kiln, "set_pid_selection", req.value)
     return {"status": "ok", "pid_selection": req.value}
 
 
 @router.get("/setting/analog-decimal")
 async def get_analog_decimal(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_analog_decimal_setting")
+    val = await _eval(kiln, "get_analog_decimal")
     return {"analog_decimal": val}
 
 
 @router.post("/setting/analog-decimal")
 async def set_analog_decimal(req: AnalogDecimalRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_analog_decimal_setting", req.value)
+    await _eval(kiln, "set_analog_decimal", req.value)
     return {"status": "ok", "analog_decimal": req.value}
 
 
 @router.get("/setting/valve-feedback")
 async def get_valve_feedback(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_valve_feedback_setting")
+    val = await _eval(kiln, "get_valve_feedback")
     return {"valve_feedback": val}
 
 
 @router.post("/setting/valve-feedback")
 async def set_valve_feedback(req: ValveFeedbackRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_valve_feedback_setting", req.value)
+    await _eval(kiln, "set_valve_feedback", req.value)
     return {"status": "ok", "valve_feedback": req.value}
 
 
 @router.get("/setting/at-valve-feedback")
 async def get_at_valve_feedback(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_auto_tuning_valve_feedback")
+    val = await _eval(kiln, "get_at_valve_feedback")
     return {"at_valve_feedback": val}
 
 
@@ -198,55 +200,55 @@ async def get_at_valve_feedback(kiln: Any = Depends(get_kiln)):
 async def set_at_valve_feedback(
     req: ATValveFeedbackRequest, kiln: Any = Depends(get_kiln)
 ):
-    await _eval(kiln, "set_auto_tuning_valve_feedback", req.value)
+    await _eval(kiln, "set_at_valve_feedback", req.value)
     return {"status": "ok", "at_valve_feedback": req.value}
 
 
 @router.get("/setting/decimal-point")
 async def get_decimal_point(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_decimal_point_position")
+    val = await _eval(kiln, "get_decimal_point")
     return {"decimal_point": val}
 
 
 @router.post("/setting/decimal-point")
 async def set_decimal_point(req: DecimalPointRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_decimal_point_position", req.value)
+    await _eval(kiln, "set_decimal_point", req.value)
     return {"status": "ok", "decimal_point": req.value}
 
 
 @router.get("/setting/at-setting")
 async def get_at_setting(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_at_setting")
+    val = await _eval(kiln, "get_at")
     return {"at_setting": val}
 
 
 @router.post("/setting/at-setting")
 async def set_at_setting(req: ATSettingRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_at_setting", req.value)
+    await _eval(kiln, "set_at", req.value)
     return {"status": "ok", "at_setting": req.value}
 
 
 @router.get("/setting/stop-pid")
 async def get_stop_pid(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_stop_setting_pid")
+    val = await _eval(kiln, "get_stop_pid")
     return {"stop_pid": val}
 
 
 @router.post("/setting/stop-pid")
 async def set_stop_pid(req: StopSettingPIDRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_stop_setting_pid", req.value)
+    await _eval(kiln, "set_stop_pid", req.value)
     return {"status": "ok", "stop_pid": req.value}
 
 
 @router.get("/setting/temp-stop-pid")
 async def get_temp_stop_pid(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_temporarily_stop_pid")
+    val = await _eval(kiln, "get_temp_stop_pid")
     return {"temp_stop_pid": val}
 
 
 @router.post("/setting/temp-stop-pid")
 async def set_temp_stop_pid(req: TempStopPIDRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_temporarily_stop_pid", req.value)
+    await _eval(kiln, "set_temp_stop_pid", req.value)
     return {"status": "ok", "temp_stop_pid": req.value}
 
 
@@ -321,13 +323,13 @@ async def set_output_value(
 
 @router.get("/alarm/system")
 async def get_system_alarm(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_system_alarm_setting")
+    val = await _eval(kiln, "get_system_alarm")
     return {"system_alarm": val}
 
 
 @router.post("/alarm/system")
 async def set_system_alarm(req: SystemAlarmRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_system_alarm_setting", req.value)
+    await _eval(kiln, "set_system_alarm", req.value)
     return {"status": "ok", "system_alarm": req.value}
 
 
@@ -383,14 +385,14 @@ async def set_pattern_step(
 
 @router.get("/pattern_start")
 async def get_start_pattern(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_start_pattern_number")
+    val = await _eval(kiln, "get_start_pattern")
     return {"start_pattern": val}
 
 
 @router.post("/pattern_start")
 async def set_start_pattern(req: IntValueRequest, kiln: Any = Depends(get_kiln)):
     try:
-        await _eval(kiln, "set_start_pattern_number", req.value)
+        await _eval(kiln, "set_start_pattern", req.value)
         return {"status": "ok", "start_pattern": req.value}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -399,7 +401,7 @@ async def set_start_pattern(req: IntValueRequest, kiln: Any = Depends(get_kiln))
 @router.get("/pattern/{id}/actual-steps")
 async def get_actual_steps(id: int, kiln: Any = Depends(get_kiln)):
     try:
-        val = await _eval(kiln, "get_actual_step_number_setting", id)
+        val = await _eval(kiln, "get_actual_steps", id)
         return {"pattern_id": id, "actual_steps": val}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -410,7 +412,7 @@ async def set_actual_steps(
     id: int, req: IntValueRequest, kiln: Any = Depends(get_kiln)
 ):
     try:
-        await _eval(kiln, "set_actual_step_number_setting", id, req.value)
+        await _eval(kiln, "set_actual_steps", id, req.value)
         return {"status": "ok", "pattern_id": id, "actual_steps": req.value}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -452,13 +454,13 @@ async def get_led_status(kiln: Any = Depends(get_kiln)):
 
 @router.get("/run")
 async def get_run_status(kiln: Any = Depends(get_kiln)):
-    val = await _eval(kiln, "get_run_stop_setting")
+    val = await _eval(kiln, "get_run_stop")
     return {"run_status": val}
 
 
 @router.post("/run")
 async def set_run_status(req: RunStopRequest, kiln: Any = Depends(get_kiln)):
-    await _eval(kiln, "set_run_stop_setting", req.value)
+    await _eval(kiln, "set_run_stop", req.value)
     return {"status": "ok", "run_status": req.value}
 
 

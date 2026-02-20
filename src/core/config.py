@@ -7,7 +7,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 # Modbus Configuration
 SLAVE_ADDRESS = 1
-DEFAULT_PORT_NAME = "/dev/ttyUSB0"
+DEFAULT_PORT_NAME = os.getenv("DEFAULT_PORT_NAME", "/dev/ttyUSB0")
 DEFAULT_BAUDRATE = 38400
 TIMEOUT = 0.3
 

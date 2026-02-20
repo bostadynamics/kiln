@@ -1,33 +1,34 @@
 # src/routers/ui.py
 import asyncio
-from fastapi import APIRouter, Request, HTTPException, Depends
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from typing import Any
+from ..core.config import TEMPLATES_DIR
+from ..core.delta_2 import (
+    AnalogDecimalSetting,
+    ATSetting,
+    AutoTuningValveFeedback,
+    ControlMethod,
+    DecimalPointPosition,
+    HeatingCoolingSelection,
+    PIDParameterSelection,
+    RunStopSetting,
+    SettingLockStatus,
+    StopSettingPID,
+    SystemAlarmSetting,
+    TemporarilyStopPID,
+    TempUnit,
+    ValveFeedbackSetting,
+)
+from ..core.models import PatternStepRequest
 
 # from ..core.kiln import kiln # Remove direct import
 from ..core.utils import calculate_color
-from ..core.config import TEMPLATES_DIR
-from ..core.models import PatternStepRequest
-from .monitoring import get_kiln
-from ..core.delta_2 import (
-    ControlMethod,
-    HeatingCoolingSelection,
-    SystemAlarmSetting,
-    SettingLockStatus,
-    PIDParameterSelection,
-    AnalogDecimalSetting,
-    ValveFeedbackSetting,
-    AutoTuningValveFeedback,
-    TempUnit,
-    DecimalPointPosition,
-    ATSetting,
-    RunStopSetting,
-    StopSettingPID,
-    TemporarilyStopPID,
-)
 from . import monitoring
+from .monitoring import get_kiln
 
 router = APIRouter(tags=["ui"])
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -56,20 +57,20 @@ async def settings_view(request: Request, kiln: Any = Depends(get_kiln)):
             current_settings = await asyncio.to_thread(
                 lambda: {
                     "control_method": kiln.get_control_method(),
-                    "heating_cooling": kiln.get_heating_cooling_selection(),
-                    "temp_unit": kiln.get_temp_unit_display(),
+                    "heating_cooling": kiln.get_heating_cooling(),
+                    "temp_unit": kiln.get_temp_unit(),
                     "sensor_type": kiln.get_sensor_type(),
-                    "lock_status": kiln.get_setting_lock_status(),
-                    "pid_selection": kiln.get_pid_parameter_selection(),
-                    "analog_decimal": kiln.get_analog_decimal_setting(),
-                    "valve_feedback": kiln.get_valve_feedback_setting(),
-                    "at_valve_feedback": kiln.get_auto_tuning_valve_feedback(),
-                    "decimal_point": kiln.get_decimal_point_position(),
-                    "at_setting": kiln.get_at_setting(),
-                    "run_stop": kiln.get_run_stop_setting(),
-                    "stop_pid": kiln.get_stop_setting_pid(),
-                    "temp_stop_pid": kiln.get_temporarily_stop_pid(),
-                    "system_alarm": kiln.get_system_alarm_setting(),
+                    "lock_status": kiln.get_lock_status(),
+                    "pid_selection": kiln.get_pid_selection(),
+                    "analog_decimal": kiln.get_analog_decimal(),
+                    "valve_feedback": kiln.get_valve_feedback(),
+                    "at_valve_feedback": kiln.get_at_valve_feedback(),
+                    "decimal_point": kiln.get_decimal_point(),
+                    "at_setting": kiln.get_at(),
+                    "run_stop": kiln.get_run_stop(),
+                    "stop_pid": kiln.get_stop_pid(),
+                    "temp_stop_pid": kiln.get_temp_stop_pid(),
+                    "system_alarm": kiln.get_system_alarm(),
                 }
             )
     except Exception as e:
@@ -115,34 +116,18 @@ async def update_setting(name: str, request: Request, kiln: Any = Depends(get_ki
         if hasattr(kiln, "set_setting") and asyncio.iscoroutinefunction(
             kiln.set_setting
         ):
-            if name == "system_alarm":
-                await kiln.set_system_alarm(val_int)
-            elif name == "sensor_type":
-                await kiln.set_sensor_type(val_int)
-            else:
-                await kiln.set_setting(name.replace("_", "-"), val_int)
+            await kiln.set_setting(name.replace("_", "-"), val_int)
             return {"status": "ok"}
 
         # Direct access (sync)
-        if name == "system_alarm":
-            await asyncio.to_thread(kiln.set_system_alarm_setting, val_int)
-        elif name == "sensor_type":
-            await asyncio.to_thread(kiln.set_sensor_type, val_int)
+        method_name = f"set_{name}"
+        if hasattr(kiln, method_name):
+            await asyncio.to_thread(getattr(kiln, method_name), val_int)
         else:
-            method_name = f"set_{name}_setting"
-            if hasattr(kiln, method_name):
-                await asyncio.to_thread(getattr(kiln, method_name), val_int)
-            else:
-                fallback_name = name.replace("-", "_")
-                method_name = (
-                    f"set_{fallback_name}_display"
-                    if "temp_unit" in name
-                    else f"set_{fallback_name}"
-                )
-                if hasattr(kiln, method_name):
-                    await asyncio.to_thread(getattr(kiln, method_name), val_int)
-                else:
-                    raise AttributeError(f"Kiln has no setter for {name}")
+            raise AttributeError(
+                f"Kiln has no setter for {name} (expected {method_name})"
+            )
+
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -185,7 +170,7 @@ async def get_dashboard_partial(request: Request, kiln: Any = Depends(get_kiln))
             time_left_min = data["time_left_min"]
             time_left_sec = data["time_left_sec"]
             actual_steps = await asyncio.to_thread(
-                kiln.get_actual_step_number_setting, current_pattern
+                kiln.get_actual_steps, current_pattern
             )
 
         pv_color = calculate_color(pv, setpoint)
@@ -274,7 +259,7 @@ async def update_start_pattern(request: Request, kiln: Any = Depends(get_kiln)):
         ):
             await kiln.set_start_pattern(int(value))
         else:
-            await asyncio.to_thread(kiln.set_start_pattern_number, int(value))
+            await asyncio.to_thread(kiln.set_start_pattern, int(value))
     return await get_dashboard_partial(request, kiln=kiln)
 
 
@@ -288,7 +273,7 @@ async def update_actual_steps(id: int, request: Request, kiln: Any = Depends(get
         ):
             await kiln.set_actual_steps(id, int(value))
         else:
-            await asyncio.to_thread(kiln.set_actual_step_number_setting, id, int(value))
+            await asyncio.to_thread(kiln.set_actual_steps, id, int(value))
     return await get_dashboard_partial(request, kiln=kiln)
 
 
